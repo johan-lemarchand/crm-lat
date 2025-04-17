@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="utf-8">
+        <title>Coupons delock du dépôt Trimble</title>
+        <style>
+            body {
+                background-color: white;
+                margin: 48px auto;
+                font-family: sans-serif;
+            }
+            .container {
+                border: 1px solid #eaeaea;
+                border-radius: 4px;
+                margin: 40px auto;
+                padding: 20px;
+                max-width: 600px;
+            }
+            .title {
+                color: black;
+                font-size: 24px;
+                font-weight: normal;
+                text-align: center;
+                padding: 0;
+                margin: 30px 0;
+            }
+            .section {
+                margin-bottom: 30px;
+            }
+            .section-title {
+                font-size: 18px;
+                font-weight: bold;
+                margin-bottom: 10px;
+            }
+            .summary {
+                background-color: #f5f5f5;
+                padding: 15px;
+                border-radius: 4px;
+                margin-bottom: 20px;
+            }
+            .summary-item {
+                margin: 5px 0;
+            }
+            .details-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 15px;
+            }
+            .details-table th, .details-table td {
+                border: 1px solid #ddd;
+                padding: 8px;
+                text-align: left;
+            }
+            .details-table th {
+                background-color: #f5f5f5;
+            }
+            .status-success {
+                color: #0a0;
+            }
+            .status-error {
+                color: #d00;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1 class="title">Coupons delock du dépôt Trimble</h1>
+            
+            <div class="section">
+                <div class="summary">
+                    <div class="summary-item">
+                        <strong>Total des coupons traités :</strong> {{ resume.total_coupons }}
+                    </div>
+                    <div class="summary-item">
+                        <strong>Coupons traités avec succès :</strong> 
+                        <span class="status-success">{{ resume.success_count }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>Coupons en erreur :</strong> 
+                        <span class="status-error">{{ resume.error_count }}</span>
+                    </div>
+                </div>
+            </div>
+
+            {% if resume.details|length > 0 %}
+                <div class="section">
+                    <h2 class="section-title">Détails des traitements</h2>
+                    <table class="details-table">
+                        <thead>
+                            <tr>
+                                <th>Numéro de coupon</th>
+                                <th>Statut</th>
+                                <th>Message</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for detail in resume.details %}
+                                <tr>
+                                    <td>{{ detail.pcdnum }}</td>
+                                    <td class="status-{{ detail.status }}">
+                                        {{ detail.status == 'success' ? 'Succès' : 'Erreur' }}
+                                    </td>
+                                    <td>{{ detail.message|default('-') }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+    </body>
+</html> 

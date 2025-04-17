@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .error-details {
+            background-color: #fff3f3;
+            padding: 15px;
+            margin-top: 20px;
+            border-left: 4px solid #dc3545;
+        }
+        .currency-info {
+            margin: 15px 0;
+            padding: 10px;
+            border-left: 4px solid #007bff;
+            background-color: #f8f9fa;
+        }
+        .old-value {
+            color: #aaaaaa;
+            font-style: italic;
+        }
+    </style>
+    <title></title>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Rapport de synchronisation des devises</h2>
+            <p>Bonjour,</p>
+            <p>Mise à jour du {{ data.date|date('d/m/Y') }} à {{ data.date|date('H') }}H{{ data.date|date('i') }}.</p>
+        </div>
+
+        {% if data.statistiques.currencies is defined %}
+            {% for currency, info in data.statistiques.currencies %}
+                <div class="currency-info">
+                    <h3>Devise {{ currency }}</h3>
+                    <div class="old-value">
+                        <p>La dernière mise à jour datait du <b>{{ info.last_update|date('d/m/Y H') }}H{{ info.last_update|date('i') }}</b></p>
+                        <p>L'ancien taux était de <b>1 {{ currency }} = {{ info.old_rate|number_format(12, '.', '') }} EUR</b></p>
+                    </div>
+                    <p>Le nouveau taux de conversion est <b>1 {{ currency }} = {{ info.new_rate|number_format(12, '.', '') }} EUR</b></p>
+                    {% if info.bce_rate is defined %}
+                        <p>Taux BCE du jour : <b>1 {{ currency }} = {{ info.bce_rate|number_format(12, '.', '') }} EUR</b></p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% if data.statistiques.resultats.details is defined and data.statistiques.resultats.details|length > 0 %}
+            <div class="error-details">
+                <h3>Détails des erreurs</h3>
+                {% for detail in data.statistiques.resultats.details %}
+                    <div class="error-item">
+                        {% if detail.currency is defined %}
+                            <h4>Devise : {{ detail.currency }}</h4>
+                        {% endif %}
+                        <p>Erreur : {{ detail.error }}</p>
+                        {% if detail.trace is defined %}
+                            <pre>{{ detail.trace }}</pre>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if data.exception is defined %}
+            <div class="error-details">
+                <h3>Exception</h3>
+                <p>{{ data.exception }}</p>
+                {% if data.trace is defined %}
+                    <pre>{{ data.trace }}</pre>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <p>
+            <br>---Equipe Latitude GPS
+            <br>Script Serveur SRVLATBDD
+        </p>
+    </div>
+</body>
+</html> 

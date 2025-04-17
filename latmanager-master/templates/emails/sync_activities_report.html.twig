@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="utf-8">
+        <title>Rapport de synchronisation des activités et créneaux</title>
+        <style>
+            body {
+                background-color: white;
+                margin: 48px auto;
+                font-family: sans-serif;
+            }
+            .container {
+                border: 1px solid #eaeaea;
+                border-radius: 4px;
+                margin: 40px auto;
+                padding: 20px;
+                max-width: 600px;
+            }
+            .title {
+                color: black;
+                font-size: 24px;
+                font-weight: normal;
+                text-align: center;
+                padding: 0;
+                margin: 30px 0;
+            }
+            .status {
+                font-size: 14px;
+                line-height: 24px;
+                margin-bottom: 20px;
+            }
+            .status-success { color: #10B981; }
+            .status-error { color: #EF4444; }
+            .status-warning { color: #F59E0B; }
+            .details {
+                color: black;
+                font-size: 14px;
+                line-height: 24px;
+                margin-bottom: 20px;
+            }
+            .section {
+                margin-bottom: 30px;
+            }
+            .section-title {
+                font-size: 18px;
+                font-weight: bold;
+                margin-bottom: 10px;
+            }
+            .stats {
+                background-color: #f9fafb;
+                padding: 15px;
+                border-radius: 4px;
+                margin-bottom: 20px;
+            }
+            .error-list {
+                color: #EF4444;
+                margin-top: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1 class="title">Rapport de synchronisation des activités et créneaux</h1>
+
+            <div class="status {% if data.statistiques.status_command == 'success' %}status-success{% else %}status-error{% endif %}">
+                <strong>Statut : {{ data.statistiques.status_command == 'success' ? 'Succès' : 'Erreur' }}</strong>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Période de synchronisation</div>
+                <div class="stats">
+                    <p>Du : {{ data.periode.debut }}</p>
+                    <p>Au : {{ data.periode.fin }}</p>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Statistiques globales</div>
+                <div class="stats">
+                    <p>Total des analyses : {{ data.statistiques.total_analyses }}</p>
+                    <p>Temps d'exécution : {{ data.statistiques.temps_execution }}</p>
+                </div>
+            </div>
+
+            {% if data.statistiques.activites is defined %}
+                <div class="section">
+                    <div class="section-title">Activités</div>
+                    <div class="stats">
+                        <p>Total : {{ data.statistiques.activites.total }}</p>
+                        <p>Créées : {{ data.statistiques.activites.created }}</p>
+                        <p>Mises à jour : {{ data.statistiques.activites.updated }}</p>
+                        <p>Supprimées : {{ data.statistiques.activites.deleted }}</p>
+                        <p>Erreurs : {{ data.statistiques.activites.errors }}</p>
+                        <p>Durée : {{ data.statistiques.activites.duration }}</p>
+
+                        {% if data.statistiques.activites.error_details is not empty %}
+                            <div class="error-list">
+                                <p><strong>Détails des erreurs :</strong></p>
+                                {% for error in data.statistiques.activites.error_details %}
+                                    <p>• {{ error.type }} (ID: {{ error.activity_id }}) : 
+                                        {% if error.message is defined %}
+                                            {{ error.message }}
+                                        {% elseif error.missing_properties is defined %}
+                                            Propriétés manquantes: {{ error.missing_properties|join(', ') }}
+                                        {% endif %}
+                                    </p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if data.statistiques.creneaux is defined %}
+                <div class="section">
+                    <div class="section-title">Créneaux</div>
+                    <div class="stats">
+                        <p>Total : {{ data.statistiques.creneaux.total }}</p>
+                        <p>Créés : {{ data.statistiques.creneaux.created }}</p>
+                        <p>Mis à jour : {{ data.statistiques.creneaux.updated }}</p>
+                        <p>Supprimés : {{ data.statistiques.creneaux.deleted }}</p>
+                        <p>Erreurs : {{ data.statistiques.creneaux.errors }}</p>
+                        <p>Durée : {{ data.statistiques.creneaux.duration }}</p>
+
+                        {% if data.statistiques.creneaux.error_details is defined and data.statistiques.creneaux.error_details is not empty %}
+                            <div class="error-list">
+                                <p><strong>Détails des erreurs :</strong></p>
+                                {% for error in data.statistiques.creneaux.error_details %}
+                                    <p>• {{ error.type }} (ID: {% if error.timeslot_ids is defined %}{{ error.timeslot_ids|join(', ') }}{% else %}{{ error.timeslot_id }}{% endif %}) : {{ error.message }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if data.statistiques.resultats.details is not empty %}
+                <div class="section">
+                    <div class="section-title">Détails des erreurs générales</div>
+                    <div class="error-list">
+                        {% for detail in data.statistiques.resultats.details %}
+                            <p>• {{ detail }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if data.exception is defined %}
+                <div class="section">
+                    <div class="section-title">Erreur critique</div>
+                    <div class="error-list">
+                        <p>{{ data.exception }}</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </body>
+</html> 

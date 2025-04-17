@@ -1,0 +1,25 @@
+framework:
+    messenger:
+        default_bus: messenger.bus.command
+        
+        failure_transport: failed
+
+        transports:
+            sync: 
+                dsn: 'sync://'
+            failed: 'doctrine://default?queue_name=failed'
+
+        buses:
+            messenger.bus.default: []
+            messenger.bus.query:
+                middleware:
+                    - doctrine_transaction
+            messenger.bus.command:
+                middleware:
+                    - doctrine_transaction
+                    - validation
+
+        routing:
+            'App\ODF\Application\Command\ValidateOrder\ValidateOrderCommand': sync
+            # Route other messages to sync transport
+            '*': sync

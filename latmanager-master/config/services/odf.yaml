@@ -1,0 +1,81 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    # Wavesoft Connection
+    App\ODF\Domain\Repository\WavesoftConnectionInterface:
+        class: App\ODF\Infrastructure\Repository\WavesoftConnection
+        arguments:
+            $connection: '@doctrine.dbal.wavesoft_connection'
+
+    # Repositories
+    App\ODF\Domain\Repository\PieceDetailsRepository:
+        class: App\ODF\Infrastructure\Repository\DbalPieceDetailsRepository
+        arguments:
+            $connection: '@doctrine.dbal.wavesoft_connection'
+
+    App\ODF\Domain\Repository\AffaireRepository:
+        class: App\ODF\Infrastructure\Repository\DbalAffaireRepository
+        arguments:
+            $connection: '@doctrine.dbal.wavesoft_connection'
+
+    # Domain Services
+    App\ODF\Domain\Service\UniqueIdServiceInterface:
+        class: App\ODF\Infrastructure\Service\UniqueIdService
+        arguments:
+            $repository: '@App\ODF\Domain\Repository\PieceDetailsRepository'
+
+    App\ODF\Domain\Service\EventService: ~
+
+    App\ODF\Domain\Service\LockServiceInterface:
+        class: App\ODF\Infrastructure\Service\LockService
+
+    App\ODF\Domain\Service\AffaireServiceInterface:
+        class: App\ODF\Infrastructure\Service\AffaireService
+
+    App\ODF\Domain\Service\ArticleProcessServiceInterface:
+        class: App\ODF\Infrastructure\Service\ArticleProcessService
+
+    App\ODF\Domain\Service\AutomateServiceInterface:
+        class: App\ODF\Infrastructure\Service\AutomateService
+
+    # Infrastructure Services
+    App\ODF\Infrastructure\Service\Timer:
+        arguments:
+            $connection: '@doctrine.dbal.wavesoft_connection'
+
+    App\ODF\Infrastructure\Service\TrimbleService:
+        arguments:
+            $connection: '@doctrine.dbal.wavesoft_connection'
+
+    # Command Handlers
+    App\ODF\Application\Command\LockOrder\LockOrderHandler:
+        arguments:
+            $connection: '@doctrine.dbal.wavesoft_connection'
+            $timer: '@App\ODF\Infrastructure\Service\Timer'
+
+    App\ODF\Application\Command\ProcessArticles\ProcessArticlesHandler:
+        arguments:
+            $connection: '@doctrine.dbal.wavesoft_connection'
+            $timer: '@App\ODF\Infrastructure\Service\Timer'
+    App\ODF\Application\Command\CreateOrder\CreateOrderHandler:
+        arguments:
+            $connection: '@doctrine.dbal.wavesoft_connection'
+            $uniqueIdService: '@App\ODF\Domain\Service\UniqueIdServiceInterface'
+
+    App\ODF\Application\Command\ProcessPasscodes\ProcessPasscodesHandler:
+        arguments:
+            $connection: '@doctrine.dbal.wavesoft_connection'
+            $activationService: '@App\ODF\Domain\Service\ActivationService'
+            $timer: '@App\ODF\Infrastructure\Service\Timer'
+    # Query Handlers
+
+    App\ODF\Application\Command\ValidateOrder\ValidateOrderCommandHandler:
+        arguments:
+            $uniqueIdService: '@App\ODF\Domain\Service\UniqueIdServiceInterface'
+            $lockService: '@App\ODF\Domain\Service\LockServiceInterface'
+            $affaireService: '@App\ODF\Domain\Service\AffaireServiceInterface'
+            $articleProcessService: '@App\ODF\Domain\Service\ArticleProcessServiceInterface'
+            $automateService: '@App\ODF\Domain\Service\AutomateServiceInterface'

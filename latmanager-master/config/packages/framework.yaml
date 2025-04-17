@@ -1,0 +1,24 @@
+# see https://symfony.com/doc/current/reference/configuration/framework.html
+framework:
+    secret: '%env(APP_SECRET)%'
+    profiler:
+        collect: true
+        only_exceptions: false
+        only_main_requests: false
+        enabled: true
+        collect_parameter: '_profiler'
+
+    # Note that the session will be started ONLY if you read or write from it.
+    session: true
+    php_errors:
+        log: true
+        throw: false
+
+    #esi: true
+    #fragments: true
+
+when@test:
+    framework:
+        test: true
+        session:
+            storage_factory_id: session.storage.factory.mock_file

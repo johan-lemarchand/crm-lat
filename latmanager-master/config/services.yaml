@@ -1,0 +1,236 @@
+parameters:
+    app.logs_apps_paths: '%env(json:LOGS_APPS_PATHS)%'
+    app.project_dir: '%kernel.project_dir%'
+    app.email.from_address: 'srvlatbdd-test-jojo@latitudegps.com'
+    app.email.from_name: 'Project Manager (noreply)'
+    app.email.to_address: 'informatique@latitudegps.com'
+    # Configuration Trimble
+    trimble.client_id: '%env(TRIMBLE_CLIENT_ID)%'
+    trimble.client_secret: '%env(TRIMBLE_CLIENT_SECRET)%'
+    trimble.base_url: '%env(TRIMBLE_BASE_URL)%'
+    trimble.token_url: '%env(TRIMBLE_TOKEN_URL)%'
+    # Configuration TCP
+    tcp.host: '%env(DB_HOST)%'
+    tcp.port: '%env(int:PORT_TCP_AUTOMATE)%'
+    tcp.instance_sql: '%env(INSTANCE_SQL)%'
+    tcp.dossier: '%env(DOSSIER)%'
+
+imports:
+    - { resource: services/*.yaml }
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        bind:
+            $projectDir: '%app.project_dir%'
+            $queryBus: '@messenger.bus.query'
+            $commandBus: '@messenger.bus.command'
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+            - '../src/Migrations/'
+            - '../src/DataFixtures/'
+
+    App\Controller\:
+        resource: '../src/Controller/'
+        tags: ['controller.service_arguments']
+
+    # Services ODF
+    App\ODF\:
+        resource: '../src/ODF/'
+        exclude:
+            - '../src/ODF/Domain/Entity/'
+
+    App\ODF\Domain\Service\UniqueIdServiceInterface:
+        class: App\ODF\Infrastructure\Service\UniqueIdService
+
+    App\ODF\Domain\Repository\AffaireRepositoryInterface:
+        class: App\ODF\Infrastructure\Repository\DbalAffaireRepository
+
+    App\ODF\Domain\Repository\OrderRepositoryInterface:
+        alias: App\ODF\Infrastructure\Repository\OrderRepository
+
+    App\ODF\Domain\Service\TrimbleServiceInterface:
+        alias: App\ODF\Infrastructure\Service\TrimbleService
+
+    App\ODF\Domain\Service\MemoAndApiServiceInterface:
+        alias: App\ODF\Infrastructure\Service\MemoAndApiService
+
+    App\ODF\Domain\Repository\PieceDetailsRepository:
+        alias: App\ODF\Infrastructure\Repository\DbalPieceDetailsRepository
+
+    App\ODF\Domain\Service\TcpServiceInterface:
+        alias: App\ODF\Infrastructure\Service\TcpService
+
+    App\ODF\Domain\Service\ArticleServiceInterface:
+        alias: App\ODF\Infrastructure\Service\ArticleService
+
+    App\ODF\Domain\Service\LockServiceInterface:
+        class: App\ODF\Infrastructure\Service\LockService
+
+    App\ODF\Domain\Service\AffaireServiceInterface:
+        class: App\ODF\Infrastructure\Service\AffaireService
+
+    App\ODF\Domain\Service\ArticleProcessServiceInterface:
+        class: App\ODF\Infrastructure\Service\ArticleProcessService
+
+    App\ODF\Domain\Service\AutomateServiceInterface:
+        alias: App\ODF\Infrastructure\Service\AutomateService
+
+    App\Shared\Service\Timer:
+        arguments:
+            $logger: '@logger'
+
+    App\ODF\Infrastructure\Service\TrimbleService:
+        arguments:
+            $params: '@parameter_bag'
+            $logger: '@logger'
+            $timer: '@App\Shared\Service\Timer'
+
+    App\ODF\Infrastructure\Service\MemoAndApiService:
+        arguments:
+            $connection: '@doctrine.dbal.default_connection'
+
+    # Configuration du logger API Praxedo
+    App\Applications\Praxedo\Common\PraxedoApiLoggerInterface:
+        alias: App\Service\PraxedoApiLogger
+
+    App\Service\EmailService:
+        lazy: true
+        arguments:
+            $mailer: '@mailer.mailer'
+            $twig: '@twig'
+            $logger: '@logger'
+
+    App\Applications\Praxedo\scripts\Articles\Service\PraxedoArticleService:
+        lazy: true
+        arguments:
+            $logger: '@logger'
+            $praxedoApiLogger: '@App\Applications\Praxedo\Common\PraxedoApiLoggerInterface'
+
+    App\Command\VersionUpdateCommand:
+        lazy: true
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    App\Service\WindowsTaskSchedulerService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    App\ODF\Domain\Service\ValidationService: ~
+
+    App\ODF\Infrastructure\Repository\DbalPieceDetailsRepository:
+        arguments:
+            $connection: '@doctrine.dbal.wavesoft_connection'
+
+    App\ODF\Domain\Repository\PieceDetailsRepositoryInterface:
+        class: App\ODF\Infrastructure\Repository\DbalPieceDetailsRepository
+
+    App\ODF\Domain\Service\ArticleValidationService:
+        autowire: true
+
+    App\ODF\Domain\Repository\CouponRepositoryInterface:
+        class: App\ODF\Infrastructure\Repository\DbalCouponRepository
+
+    App\ODF\Domain\Repository\AutomateRepositoryInterface:
+        class: App\ODF\Infrastructure\Repository\DbalAutomateRepository
+
+    # Command repositories
+    App\Command\Domain\Repository\CommandRepositoryInterface:
+        class: App\Command\Infrastructure\Repository\DoctrineCommandRepository
+
+    App\Command\Domain\Repository\CommandExecutionRepositoryInterface:
+        class: App\Command\Infrastructure\Repository\DoctrineCommandExecutionRepository
+
+    App\Command\Application\Query\ListCurrencyFiles\ListCurrencyFilesHandler:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    App\Command\Application\Query\DownloadCurrencyFile\DownloadCurrencyFileHandler:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    App\Command\Domain\Repository\CommandStatsRepositoryInterface:
+        class: App\Command\Infrastructure\Repository\DoctrineCommandStatsRepository
+
+    App\Command\Domain\Repository\ApiLogRepositoryInterface:
+        class: App\Command\Infrastructure\Repository\DoctrineApiLogRepository
+
+    App\Command\Domain\Repository\LogResumeRepositoryInterface:
+        class: App\Command\Infrastructure\Repository\DoctrineLogResumeRepository
+
+    # Settings
+    App\Settings\Domain\Repository\SettingsRepositoryInterface:
+        class: App\Settings\Infrastructure\Repository\DoctrineSettingsRepository
+
+    App\Settings\Domain\Repository\LogRepositoryInterface:
+        class: App\Settings\Infrastructure\Repository\DbalLogRepository
+
+    App\Settings\Domain\Service\LogServiceInterface:
+        class: App\Settings\Infrastructure\Service\LogService
+
+    # Command & Query Handlers
+    App\Settings\Application\Command\:
+        resource: '../src/Settings/Application/Command/**/*Handler.php'
+        tags: [{ name: messenger.message_handler, bus: messenger.bus.command }]
+
+    App\Settings\Application\Query\:
+        resource: '../src/Settings/Application/Query/**/*Handler.php'
+        tags: [{ name: messenger.message_handler, bus: messenger.bus.query }]
+
+    # Configuration de la session
+    Symfony\Component\HttpFoundation\Session\SessionInterface:
+        factory: ['@request_stack', 'getSession']
+
+    # Configuration du GetOrderHandler
+    App\ODF\Application\Command\GetOrder\GetOrderHandler:
+        arguments:
+            $trimbleService: '@App\ODF\Domain\Service\TrimbleServiceInterface'
+            $orderRepository: '@App\ODF\Domain\Repository\OrderRepositoryInterface'
+            $pieceDetailsRepository: '@App\ODF\Domain\Repository\PieceDetailsRepositoryInterface'
+
+    App\ODF\Domain\Repository\PasscodeRepositoryInterface:
+        class: App\ODF\Infrastructure\Repository\PasscodeRepository
+
+    App\ODF\Infrastructure\Repository\PasscodeRepository:
+        arguments:
+            $trimbleService: '@App\ODF\Domain\Service\TrimbleServiceInterface'
+            $logger: '@logger'
+
+    App\ODF\Application\Command\CreateManufacturingOrder\CreateManufacturingOrderHandler:
+        arguments:
+            $pieceDetailsRepository: '@App\ODF\Infrastructure\Repository\DbalPieceDetailsRepository'
+            $logger: '@logger'
+            $commandBus: '@messenger.bus.command'
+        tags:
+            - { name: messenger.message_handler, bus: messenger.bus.command }
+
+    App\ODF\Infrastructure\Service\AutomateService:
+        arguments:
+            $automateRepository: '@App\ODF\Domain\Repository\AutomateRepositoryInterface'
+            $tcpService: '@App\ODF\Infrastructure\Service\TcpService'
+            $logger: '@logger'
+            $memoRepository: '@App\ODF\Domain\Repository\MemoRepositoryInterface'
+            $wavesoftLogRepository: '@App\Repository\WavesoftLogRepository'
+
+    App\Entity\WavesoftLog:
+        factory: ['@doctrine.orm.entity_manager', 'getRepository']
+        arguments:
+            - 'App\Entity\WavesoftLog'
+
+    App\Service\SizeCalculator:
+        arguments:
+            $connection: '@doctrine.dbal.default_connection'
+
+    App\Repository\EmailTemplateRepository:
+        arguments:
+            $registry: '@doctrine'
+            
+    App\Service\EmailTemplateService:
+        arguments:
+            $templateRepository: '@App\Repository\EmailTemplateRepository'

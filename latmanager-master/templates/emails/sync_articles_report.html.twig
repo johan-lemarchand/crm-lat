@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="utf-8">
+        <title>Rapport de synchronisation des articles</title>
+        <style>
+            body {
+                background-color: white;
+                margin: 48px auto;
+                font-family: sans-serif;
+            }
+            .container {
+                border: 1px solid #eaeaea;
+                border-radius: 4px;
+                margin: 40px auto;
+                padding: 20px;
+                max-width: 600px;
+            }
+            .title {
+                color: black;
+                font-size: 24px;
+                font-weight: normal;
+                text-align: center;
+                padding: 0;
+                margin: 30px 0;
+            }
+            .status {
+                font-size: 14px;
+                line-height: 24px;
+                margin-bottom: 20px;
+            }
+            .status-success { color: #10B981; }
+            .status-error { color: #EF4444; }
+            .status-warning { color: #F59E0B; }
+            .details {
+                color: black;
+                font-size: 14px;
+                line-height: 24px;
+                margin-bottom: 20px;
+            }
+            .section {
+                margin-bottom: 30px;
+            }
+            .section-title {
+                font-size: 18px;
+                font-weight: bold;
+                margin-bottom: 10px;
+            }
+            .stats {
+                background-color: #f9fafb;
+                padding: 15px;
+                border-radius: 4px;
+                margin-bottom: 20px;
+            }
+            .error-list {
+                color: #EF4444;
+                margin-top: 10px;
+            }
+            .articles-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 10px;
+                font-size: 12px;
+            }
+            .articles-table th, .articles-table td {
+                padding: 8px;
+                text-align: left;
+                border-bottom: 1px solid #eaeaea;
+            }
+            .articles-table th {
+                background-color: #f3f4f6;
+                font-weight: bold;
+            }
+            .price-change {
+                color: #10B981;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1 class="title">Rapport de synchronisation des articles</h1>
+
+            <div class="status {% if data.statistiques.status_command == 'success' %}status-success{% else %}status-error{% endif %}">
+                <strong>Statut : {{ data.statistiques.status_command == 'success' ? 'Succès' : 'Erreur' }}</strong>
+            </div>
+
+            {% if data.statistiques %}
+                <div class="section">
+                    <div class="section-title">Statistiques</div>
+                    <div class="stats">
+                        <p>Analyses effectuées : {{ data.statistiques.total_analyses }}</p>
+                        <p>Articles à mettre à jour : {{ data.statistiques.total_a_mettre_a_jour }}</p>
+                        <p>Pourcentage de réussite : {{ data.statistiques.pourcentage }}</p>
+                        <p>Temps d'exécution : {{ data.statistiques.temps_execution }}</p>
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if data.articles is defined and data.articles is not empty %}
+                <div class="section">
+                    <div class="section-title">Articles mis à jour</div>
+                    <div class="stats">
+                        <table class="articles-table">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Désignation</th>
+                                    <th>Ancien prix</th>
+                                    <th>Nouveau prix</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for article in data.articles %}
+                                    <tr>
+                                        <td>{{ article.reference }}</td>
+                                        <td>{{ article.name }}</td>
+                                        <td>{{ article.old_price|number_format(2, ',', ' ') }} €</td>
+                                        <td class="price-change">{{ article.unitPrice|number_format(2, ',', ' ') }} €</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if data.statistiques.resultats.details is not empty %}
+                <div class="section">
+                    <div class="section-title">Détails des erreurs</div>
+                    <div class="error-list">
+                        {% for detail in data.statistiques.resultats.details %}
+                            <p>• {{ detail }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if data.exception is defined %}
+                <div class="section">
+                    <div class="section-title">Erreur critique</div>
+                    <div class="error-list">
+                        <p>{{ data.exception }}</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </body>
+</html> 
